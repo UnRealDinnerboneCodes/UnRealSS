@@ -17,7 +17,7 @@ plugins {
 group 'com.unrealdinnerbone'
 version '1.0.0'
 
-archivesBaseName "UnRealSS"
+archivesBaseName 'UnRealSS'
 
 configurations {
     shade

@@ -1,27 +1,32 @@
 buildscript {
     repositories {
-        maven {
-            name 'Shadow'
-            url 'http://dl.bintray.com/content/johnrengelman/gradle-plugins'
-        }
+        jcenter()
         mavenCentral()
         mavenLocal()
     }
 }
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.1.0'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'java'
 }
 
 group 'com.unrealdinnerbone'
 version '1.0.0'
 
+
+def ENV = System.getenv()
+def buildNumber = ENV.GITHUB_RUN_NUMBER ? "${ENV.GITHUB_RUN_NUMBER}" : "0"
+def buildVersion = version + ("+build." + buildNumber).replace("\\", "")
+
+sourceCompatibility = JavaVersion.VERSION_14
+targetCompatibility = JavaVersion.VERSION_14
+
 archivesBaseName = 'UnRealSS'
 
 configurations {
     shade
-    compile.extendsFrom shade
+    implementation.extendsFrom shade
     shadow.extendsFrom shade
 }
 
@@ -37,13 +42,12 @@ repositories {
 }
 
 dependencies {
-    shade 'com.unrealdinnerbone:UnRealLib:1.0.0+build.24'
-    shade 'com.unrealdinnerbone:UnRealConfig:2.0.0+build.+'
+    shade 'com.unrealdinnerbone:UnRealLib:1.0.0+build.25'
+    shade 'com.unrealdinnerbone:UnRealConfig:2.0.0+build.15'
     shade 'io.javalin:javalin:3.7.0'
     implementation "org.projectlombok:lombok:1.18.2"
 
     annotationProcessor "org.projectlombok:lombok:1.18.2"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.10.0.pr1"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
 }
@@ -53,14 +57,14 @@ shadowJar {
     manifest {
         inheritFrom project.tasks.jar.manifest
     }
-    configurations = [project.configurations.shade]
 }
 
 jar {
     manifest {
         attributes(
                 'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'com.unrealdinnerbone.unrealweb.UnRealSS'
+                'Main-Class': 'com.unrealdinnerbone.unrealweb.UnRealSS',
+                "Implementation-Version": buildVersion
         )
     }
 }

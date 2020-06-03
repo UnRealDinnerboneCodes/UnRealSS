@@ -23,12 +23,8 @@ public class UnRealSS {
     public static Javalin javalin;
 
     public static void main(String[] args) {
-        ConfigManager configManager = new ConfigManager();
-        configManager.addProvider(EnvProvider.ENV_PROVIDER);
-        configManager.doSaving(false);
-        Config config = new Config();
-        configManager.loadConfig(config);
-        log.info("Port: {}, Location: {}", config.port, config.downloadsFolder);
+        ConfigManager configManager = ConfigManager.createSimpleEnvPropertyConfigManger();
+        Config config = configManager.loadConfig(new Config());
         javalin = Javalin.create(JavalinConfig::enableCorsForAllOrigins);
         javalin.get("/", ctx -> ctx.result("Website Online"));
         File downloadsFolder = FileHelper.getOrCreateFolder(config.downloadsFolder);

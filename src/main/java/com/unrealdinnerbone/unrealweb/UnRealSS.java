@@ -2,10 +2,12 @@ package com.unrealdinnerbone.unrealweb;
 
 import com.unrealdinnerbone.config.ConfigManager;
 import com.unrealdinnerbone.config.api.IConfig;
-import com.unrealdinnerbone.config.impl.provider.EnvProvider;
+import com.unrealdinnerbone.unreallib.CalendarUtils;
 import com.unrealdinnerbone.unreallib.JsonUtil;
 import com.unrealdinnerbone.unreallib.TaskScheduler;
 import com.unrealdinnerbone.unreallib.file.FileHelper;
+import com.unrealdinnerbone.unrealweb.discord.DiscordWebhook;
+import com.unrealdinnerbone.unrealweb.discord.EmbedObject;
 import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.core.util.FileUtil;
@@ -15,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 
 @Slf4j
 public class UnRealSS {
@@ -29,28 +30,19 @@ public class UnRealSS {
         javalin.get("/", ctx -> ctx.result("Website Online"));
         File downloadsFolder = FileHelper.getOrCreateFolder(config.downloadsFolder);
         javalin.post("/", ctx -> {
-            Calendar cal = Calendar.getInstance();
-            int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-            int month = cal.get(Calendar.MONTH) +1;
-            int year = cal.get(Calendar.YEAR);
-
-            File yearFolder = FileHelper.getOrCreateFolder(downloadsFolder, String.valueOf(year));
-            FileHelper.writeStringToFile("GO AWAY", FileHelper.getOrCreateFile(yearFolder, "index.html"), false);
-            File monthFolder = FileHelper.getOrCreateFolder(yearFolder, String.valueOf(month));
-            FileHelper.writeStringToFile("GO AWAY", FileHelper.getOrCreateFile(monthFolder, "index.html"), false);
-            File dayFolder = FileHelper.getOrCreateFolder(monthFolder, String.valueOf(dayOfMonth));
-            FileHelper.writeStringToFile("GO AWAY", FileHelper.getOrCreateFile(dayFolder, "index.html"), false);
+            CalendarUtils.Today today = CalendarUtils.getToday();
+            File dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(today.getYear())), String.valueOf(today.getMonth())), String.valueOf(today.getDay()));
             UploadedFile uploadedFile = ctx.uploadedFile("theFile");
             long time = System.currentTimeMillis();
             String name = time + "-" + uploadedFile.getFilename();
             String path = FileHelper.getOrCreateFile(dayFolder, name).getPath();
             String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
-            log.info("[{}/{}/{}] New File! {} @ {}", month, dayOfMonth, year, name, url);
+            log.info("[{}] New File! {} @ {}", today.toString(), name, url);
             FileUtil.streamToFile(uploadedFile.getContent(), path);
             ctx.result(JsonUtil.getBasicGson().toJson(new Return(uploadedFile.getFilename(), time, url)));
             TaskScheduler.handleTaskOnThread(() -> {
                 DiscordWebhook discordWebhook = new DiscordWebhook(config.discord);
-                discordWebhook.addEmbed(new DiscordWebhook.EmbedObject().setImage(url));
+                discordWebhook.addEmbed(EmbedObject.builder().image(url).build());
                 try {
                     discordWebhook.execute();
                 } catch (IOException e) {
@@ -59,6 +51,16 @@ public class UnRealSS {
             });
         });
         javalin.start(Integer.parseInt(config.port));
+    }
+
+    public static File createFolder(File baseFolder, String subFolder) {
+        File file = FileHelper.getOrCreateFile(baseFolder, subFolder);
+        createGoAwayPage(file);
+        return file;
+    }
+
+    public static void createGoAwayPage(File location) {
+        FileHelper.writeStringToFile("GO AWAY", FileHelper.getOrCreateFile(location, "index.html"), false);
     }
 
     @AllArgsConstructor

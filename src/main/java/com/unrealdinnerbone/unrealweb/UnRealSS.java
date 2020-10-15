@@ -54,13 +54,12 @@ public class UnRealSS {
     }
 
     public static File createFolder(File baseFolder, String subFolder) {
-        File file = FileHelper.getOrCreateFile(baseFolder, subFolder);
-        createGoAwayPage(file);
-        return file;
+        return createGoAwayPage(FileHelper.getOrCreateFile(baseFolder, subFolder));
     }
 
-    public static void createGoAwayPage(File location) {
+    public static File createGoAwayPage(File location) {
         FileHelper.writeStringToFile("GO AWAY", FileHelper.getOrCreateFile(location, "index.html"), false);
+        return location;
     }
 
     @AllArgsConstructor

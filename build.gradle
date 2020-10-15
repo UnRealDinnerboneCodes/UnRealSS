@@ -42,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    shade 'com.unrealdinnerbone:UnRealConfig:2.0.0+build.17'
+    shade 'com.unrealdinnerbone:UnRealConfig:2.0.0+build.18'
     shade 'com.unrealdinnerbone:UnRealLib:1.1.0+build.35'
     shade 'io.javalin:javalin:3.11.0'
 

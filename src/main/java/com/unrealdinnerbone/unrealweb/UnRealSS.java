@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 
 @Slf4j
 public class UnRealSS {
@@ -30,14 +31,17 @@ public class UnRealSS {
         javalin.get("/", ctx -> ctx.result("Website Online"));
         File downloadsFolder = FileHelper.getOrCreateFolder(config.downloadsFolder);
         javalin.post("/", ctx -> {
-            CalendarUtils.Today today = CalendarUtils.getToday();
-            File dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(today.getYear())), String.valueOf(today.getMonth())), String.valueOf(today.getDay()));
+            Calendar cal = Calendar.getInstance();
+            int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+            int month = cal.get(Calendar.MONTH) +1;
+            int year = cal.get(Calendar.YEAR);
+            File dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
             UploadedFile uploadedFile = ctx.uploadedFile("theFile");
             long time = System.currentTimeMillis();
             String name = time + "-" + uploadedFile.getFilename();
             String path = FileHelper.getOrCreateFile(dayFolder, name).getPath();
             String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
-            log.info("[{}] New File! {} @ {}", today.toString(), name, url);
+            log.info("[{}] New File! {} @ {}", cal, name, url);
             FileUtil.streamToFile(uploadedFile.getContent(), path);
             ctx.result(JsonUtil.getBasicGson().toJson(new Return(uploadedFile.getFilename(), time, url)));
             TaskScheduler.handleTaskOnThread(() -> {

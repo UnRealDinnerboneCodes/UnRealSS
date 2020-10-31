@@ -2,18 +2,19 @@ package com.unrealdinnerbone.unrealweb;
 
 import com.unrealdinnerbone.config.ConfigManager;
 import com.unrealdinnerbone.config.api.IConfig;
-import com.unrealdinnerbone.unreallib.CalendarUtils;
 import com.unrealdinnerbone.unreallib.JsonUtil;
 import com.unrealdinnerbone.unreallib.TaskScheduler;
-import com.unrealdinnerbone.unreallib.file.FileHelper;
 import com.unrealdinnerbone.unreallib.discord.DiscordWebhook;
 import com.unrealdinnerbone.unreallib.discord.EmbedObject;
+import com.unrealdinnerbone.unreallib.file.FileHelper;
 import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.core.util.FileUtil;
 import io.javalin.http.UploadedFile;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.eclipse.jetty.util.MathUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class UnRealSS {
             File dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
             UploadedFile uploadedFile = ctx.uploadedFile("theFile");
             long time = System.currentTimeMillis();
-            String name = time + "-" + uploadedFile.getFilename();
+            String name = RandomStringUtils.randomAlphanumeric(5).toUpperCase() + time + "-" + uploadedFile.getFilename();
             String path = FileHelper.getOrCreateFile(dayFolder, name).getPath();
             String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
             log.info("[{}] New File! {} @ {}", cal, name, url);
@@ -74,7 +75,6 @@ public class UnRealSS {
     }
 
     public static class Config implements IConfig {
-
 
         public String port = "9595";
         public String apiKey = "";

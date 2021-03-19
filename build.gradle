@@ -12,15 +12,15 @@ plugins {
 }
 
 group 'com.unrealdinnerbone'
-version '1.0.0'
+version '2.0.0'
 
 
 def ENV = System.getenv()
 def buildNumber = ENV.GITHUB_RUN_NUMBER ? "${ENV.GITHUB_RUN_NUMBER}" : "0"
 def buildVersion = version + ("+build." + buildNumber).replace("\\", "")
 
-sourceCompatibility = JavaVersion.VERSION_14
-targetCompatibility = JavaVersion.VERSION_14
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
 
 archivesBaseName = 'UnRealSS'
 
@@ -42,18 +42,13 @@ repositories {
 }
 
 dependencies {
-    shade ('com.unrealdinnerbone:UnRealConfig:2.0.0+build.18') {
+    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.20') {
         transitive = false
     }
-    shade ('com.unrealdinnerbone:UnRealLib:1.1.0+build.35') {
+    shade ('com.unrealdinnerbone:UnRealLib:2.0.0+build.42') {
         exclude group: "com.beust"
     }
     shade 'io.javalin:javalin:3.11.0'
-
-
-    implementation "org.projectlombok:lombok:1.18.12"
-    annotationProcessor "org.projectlombok:lombok:1.18.2"
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
 
 }
 
@@ -67,7 +62,7 @@ shadowJar {
 jar {
     manifest {
         attributes(
-                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+//                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
                 'Main-Class': 'com.unrealdinnerbone.unrealweb.UnRealSS',
                 "Implementation-Version": buildVersion
         )

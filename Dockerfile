@@ -1,4 +1,4 @@
-FROM gradle:6.3.0-jre14 as builder
+FROM gradle:6.8.3-jre15 as builder
 
 WORKDIR /build
 

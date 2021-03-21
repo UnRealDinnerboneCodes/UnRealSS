@@ -48,7 +48,7 @@ dependencies {
     shade ('com.unrealdinnerbone:UnRealLib:2.0.0+build.42') {
         exclude group: "com.beust"
     }
-    shade 'io.javalin:javalin:3.11.0'
+    shade 'io.javalin:javalin:3.13.3'
 
 }
 

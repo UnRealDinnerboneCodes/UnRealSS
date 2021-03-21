@@ -22,8 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Calendar;
 
-import static io.javalin.Javalin.log;
-
 public class UnRealSS {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("SS");
@@ -36,7 +34,8 @@ public class UnRealSS {
         javalin.get("/", ctx -> ctx.result("Website Online"));
         Path downloadsFolder = PathHelper.getOrCreateFolder(Path.of(config.downloadsFolder));
         javalin.post("/", ctx -> {
-            if(ctx.header("key").equals(config.apiKey)) {
+            String head = ctx.header("key");
+            if(head != null && head.equals(config.apiKey)) {
                 Calendar cal = Calendar.getInstance();
                 int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
                 int month = cal.get(Calendar.MONTH) +1;
@@ -47,7 +46,7 @@ public class UnRealSS {
                 String name = RandomStringUtils.randomAlphanumeric(5).toUpperCase() + time + "-" + uploadedFile.getFilename();
                 String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).toString();
                 String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
-                log.info("[{}] New File! {} @ {}", cal, name, url);
+                LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
                 FileUtil.streamToFile(uploadedFile.getContent(), path);
                 ctx.result(JsonUtil.GSON.toJson(new Return(uploadedFile.getFilename(), time, url)));
                 TaskScheduler.handleTaskOnThread(() -> {
@@ -56,9 +55,11 @@ public class UnRealSS {
                     try {
                         discordWebhook.execute();
                     } catch (IOException e) {
-                        log.error("Error with webhook", e);
+                        LOGGER.error("Error with webhook", e);
                     }
                 });
+            }else {
+                ctx.status(401);
             }
         });
         javalin.start(Integer.parseInt(config.port));

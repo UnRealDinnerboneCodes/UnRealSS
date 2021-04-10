@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        jcenter()
         mavenCentral()
         mavenLocal()
     }
@@ -33,22 +32,16 @@ configurations {
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven {
-        url = "https://maven.unreal.codes/repository/unreal/"
-        name = "UnReal Maven"
-    }
+    maven { url "https://maven.unreal.codes/repository/unreal/"}
     maven { url "https://oss.jfrog.org/artifactory/libs-release"}
 }
 
 dependencies {
-    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.20') {
-        transitive = false
-    }
-    shade ('com.unrealdinnerbone:UnRealLib:2.0.0+build.42') {
-        exclude group: "com.beust"
-    }
-    shade 'io.javalin:javalin:3.13.3'
+    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.24:core')
+    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.24:api')
+
+    shade ('com.unrealdinnerbone:UnRealLib:2.1.0+build.44')
+    shade ('io.javalin:javalin:3.13.4')
 
 }
 
@@ -62,7 +55,6 @@ shadowJar {
 jar {
     manifest {
         attributes(
-//                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
                 'Main-Class': 'com.unrealdinnerbone.unrealweb.UnRealSS',
                 "Implementation-Version": buildVersion
         )

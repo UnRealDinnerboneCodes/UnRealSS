@@ -11,15 +11,11 @@ import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.core.util.FileUtil;
 import io.javalin.http.UploadedFile;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Calendar;
 
 public class UnRealSS {
@@ -38,27 +34,26 @@ public class UnRealSS {
             if(head != null && head.equals(config.apiKey)) {
                 Calendar cal = Calendar.getInstance();
                 int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-                int month = cal.get(Calendar.MONTH) +1;
+                int month = cal.get(Calendar.MONTH) + 1;
                 int year = cal.get(Calendar.YEAR);
                 Path dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
                 UploadedFile uploadedFile = ctx.uploadedFile("theFile");
                 long time = System.currentTimeMillis();
-                String name = RandomStringUtils.randomAlphanumeric(5).toUpperCase() + time + "-" + uploadedFile.getFilename();
+                String name = time + "-" + uploadedFile.getFilename();
                 String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).toString();
                 String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
                 LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
                 FileUtil.streamToFile(uploadedFile.getContent(), path);
                 ctx.result(JsonUtil.GSON.toJson(new Return(uploadedFile.getFilename(), time, url)));
+
                 TaskScheduler.handleTaskOnThread(() -> {
-                    DiscordWebhook discordWebhook = DiscordWebhook.webhookFor(config.discord);
-                    discordWebhook.addEmbed(EmbedObject.builder().image(url).build());
                     try {
-                        discordWebhook.execute();
+                        DiscordWebhook.of(config.discord).addEmbed(EmbedObject.builder().image(url).build()).execute();
                     } catch (IOException e) {
                         LOGGER.error("Error with webhook", e);
                     }
                 });
-            }else {
+            } else {
                 ctx.status(401);
             }
         });
@@ -66,16 +61,7 @@ public class UnRealSS {
     }
 
     public static Path createFolder(Path baseFolder, String subFolder) throws IOException {
-        return createGoAwayPage(PathHelper.getOrCreateFolder(baseFolder.resolve(subFolder)));
-    }
-
-    public static Path createGoAwayPage(Path location) {
-        try {
-            Files.writeString(location, "GO AWAY", StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
-        } catch(IOException e) {
-            LOGGER.error("Error while writing to file", e);
-        }
-        return location;
+        return PathHelper.getOrCreateFolder(baseFolder.resolve(subFolder));
     }
 
     public static record Return(String fileName, long time, String location) {}
@@ -97,10 +83,4 @@ public class UnRealSS {
             return "config";
         }
     }
-
-
-
-
 }
-
-

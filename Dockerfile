@@ -1,4 +1,4 @@
-FROM gradle:7.0.0 as builder
+FROM gradle:7.0.0-jdk16 as builder
 
 WORKDIR /build
 

@@ -40,7 +40,7 @@ public class UnRealSS {
                 UploadedFile uploadedFile = ctx.uploadedFile("theFile");
                 long time = System.currentTimeMillis();
                 String name = time + "-" + uploadedFile.getFilename();
-                String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).toString();
+                String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).orElseThrow().toString();
                 String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.getValue().length() + 1).replace("\\", "/");
                 LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
                 FileUtil.streamToFile(uploadedFile.getContent(), path);

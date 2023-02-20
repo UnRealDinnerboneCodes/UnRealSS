@@ -7,9 +7,8 @@ import com.unrealdinnerbone.config.config.StringConfig;
 import com.unrealdinnerbone.unreallib.file.PathHelper;
 import com.unrealdinnerbone.unreallib.json.JsonUtil;
 import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
-import io.javalin.core.util.FileUtil;
 import io.javalin.http.UploadedFile;
+import io.javalin.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,13 +24,13 @@ public class UnRealSS {
     public static void main(String[] args) throws IOException {
         ConfigManager configManager = ConfigManager.createSimpleEnvPropertyConfigManger();
         Config config = configManager.loadConfig("config", Config::new);
-        javalin = Javalin.create(JavalinConfig::enableCorsForAllOrigins);
+        javalin = Javalin.create(javalinConfig -> {}).start(config.port.getValue());
         javalin.get("/", ctx -> ctx.result("Website Online"));
         Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.getValue()));
         javalin.post("/", ctx -> {
             String head = ctx.header("key");
             String apiKey = config.apiKey.getValue();
-            if(true && head != null && head.equals(apiKey)) {
+            if(head != null && head.equals(apiKey)) {
                 Calendar cal = Calendar.getInstance();
                 int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
                 int month = cal.get(Calendar.MONTH) + 1;
@@ -39,12 +38,12 @@ public class UnRealSS {
                 Path dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
                 UploadedFile uploadedFile = ctx.uploadedFile("theFile");
                 long time = System.currentTimeMillis();
-                String name = time + "-" + uploadedFile.getFilename();
+                String name = time + "-" + uploadedFile.filename();
                 String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).orElseThrow().toString();
                 String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.getValue().length() + 1).replace("\\", "/");
                 LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
-                FileUtil.streamToFile(uploadedFile.getContent(), path);
-                ctx.result(JsonUtil.DEFAULT.toJson(Return.class, new Return(uploadedFile.getFilename(), time, url)));
+                FileUtil.streamToFile(uploadedFile.content(), path);
+                ctx.result(JsonUtil.DEFAULT.toJson(Return.class, new Return(uploadedFile.filename(), time, url)));
 
             } else {
                 ctx.status(401);

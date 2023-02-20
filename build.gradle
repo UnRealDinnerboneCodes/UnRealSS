@@ -1,63 +1,18 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
-}
-
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
+    id "maven-publish"
+    id 'java-library'
 }
 
-group 'com.unrealdinnerbone'
-version '2.0.0'
+apply from: 'https://raw.githubusercontent.com/UnRealDinnerbone/GradleHelpers/helpers/base.gradle'
+apply from: 'https://raw.githubusercontent.com/UnRealDinnerbone/GradleHelpers/helpers/shade.gradle'
 
-
-def ENV = System.getenv()
-def buildNumber = ENV.GITHUB_RUN_NUMBER ? "${ENV.GITHUB_RUN_NUMBER}" : "0"
-def buildVersion = version + ("+build." + buildNumber).replace("\\", "")
-
-sourceCompatibility = JavaVersion.VERSION_16
-targetCompatibility = JavaVersion.VERSION_16
-
-archivesBaseName = 'UnRealSS'
-
-configurations {
-    shade
-    implementation.extendsFrom shade
-    shadow.extendsFrom shade
-}
-
-
-repositories {
-    mavenCentral()
-    maven { url "https://maven.unreal.codes/repository/unreal/"}
-    maven { url "https://oss.jfrog.org/artifactory/libs-release"}
-}
+version = '1.0.0'
 
 dependencies {
-    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.24:core')
-    shade ('com.unrealdinnerbone:UnRealConfig:3.0.0+build.24:api')
-
-    shade ('com.unrealdinnerbone:UnRealLib:2.1.0+build.44')
+    api "com.unrealdinnerbone:UnRealConfig:7.0.0+build.46"
+    api "com.unrealdinnerbone:UnRealLib:5.0.0+build.133"
     shade ('io.javalin:javalin:3.13.4')
-
-}
-
-
-shadowJar {
-    manifest {
-        inheritFrom project.tasks.jar.manifest
-    }
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'com.unrealdinnerbone.unrealweb.UnRealSS',
-                "Implementation-Version": buildVersion
-        )
-    }
 }
 

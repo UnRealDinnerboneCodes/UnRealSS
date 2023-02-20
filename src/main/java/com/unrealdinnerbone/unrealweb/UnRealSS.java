@@ -1,12 +1,11 @@
 package com.unrealdinnerbone.unrealweb;
 
 import com.unrealdinnerbone.config.ConfigManager;
-import com.unrealdinnerbone.config.api.IConfig;
-import com.unrealdinnerbone.unreallib.JsonUtil;
-import com.unrealdinnerbone.unreallib.TaskScheduler;
-import com.unrealdinnerbone.unreallib.discord.DiscordWebhook;
-import com.unrealdinnerbone.unreallib.discord.EmbedObject;
+import com.unrealdinnerbone.config.IConfigCreator;
+import com.unrealdinnerbone.config.config.IntegerConfig;
+import com.unrealdinnerbone.config.config.StringConfig;
 import com.unrealdinnerbone.unreallib.file.PathHelper;
+import com.unrealdinnerbone.unreallib.json.JsonUtil;
 import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.core.util.FileUtil;
@@ -25,10 +24,10 @@ public class UnRealSS {
 
     public static void main(String[] args) throws IOException {
         ConfigManager configManager = ConfigManager.createSimpleEnvPropertyConfigManger();
-        Config config = configManager.loadConfig(new Config());
+        Config config = configManager.loadConfig("config", Config::new);
         javalin = Javalin.create(JavalinConfig::enableCorsForAllOrigins);
         javalin.get("/", ctx -> ctx.result("Website Online"));
-        Path downloadsFolder = PathHelper.getOrCreateFolder(Path.of(config.downloadsFolder));
+        Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.getValue()));
         javalin.post("/", ctx -> {
             String head = ctx.header("key");
             if(head != null && head.equals(config.apiKey)) {
@@ -41,46 +40,36 @@ public class UnRealSS {
                 long time = System.currentTimeMillis();
                 String name = time + "-" + uploadedFile.getFilename();
                 String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).toString();
-                String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.length() + 1).replace("\\", "/");
+                String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.getValue().length() + 1).replace("\\", "/");
                 LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
                 FileUtil.streamToFile(uploadedFile.getContent(), path);
-                ctx.result(JsonUtil.GSON.toJson(new Return(uploadedFile.getFilename(), time, url)));
+                ctx.result(JsonUtil.DEFAULT.toJson(Return.class, new Return(uploadedFile.getFilename(), time, url)));
 
-                TaskScheduler.handleTaskOnThread(() -> {
-                    try {
-                        DiscordWebhook.of(config.discord).addEmbed(EmbedObject.builder().image(url).build()).execute();
-                    } catch (IOException e) {
-                        LOGGER.error("Error with webhook", e);
-                    }
-                });
             } else {
                 ctx.status(401);
             }
         });
-        javalin.start(Integer.parseInt(config.port));
+        javalin.start(config.port.getValue());
     }
 
     public static Path createFolder(Path baseFolder, String subFolder) throws IOException {
-        return PathHelper.getOrCreateFolder(baseFolder.resolve(subFolder));
+        return PathHelper.tryGetOrCreateFolder(baseFolder.resolve(subFolder));
     }
 
     public static record Return(String fileName, long time, String location) {}
 
-    public static class Config implements IConfig {
+    public static class Config {
 
-        public String port = "9595";
-        public String apiKey = "";
-        public String discord = "";
-        public String downloadsFolder = "downloads";
+        public IntegerConfig port;
+        public StringConfig apiKey;
+        public StringConfig discord;
+        public StringConfig downloadsFolder;
 
-        @Override
-        public String getName() {
-            return "config";
-        }
-
-        @Override
-        public String getFolderName() {
-            return "config";
+        public Config(IConfigCreator configCreator) {
+            port = configCreator.createInteger("port", 9595);
+            apiKey = configCreator.createString("apiKey", "");
+            discord = configCreator.createString("discord", "");
+            downloadsFolder = configCreator.createString("downloadsFolder", "downloads");
         }
     }
 }

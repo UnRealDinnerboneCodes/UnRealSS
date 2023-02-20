@@ -30,7 +30,8 @@ public class UnRealSS {
         Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.getValue()));
         javalin.post("/", ctx -> {
             String head = ctx.header("key");
-            if(head != null && head.equals(config.apiKey)) {
+            String apiKey = config.apiKey.getValue();
+            if(head != null && head.equals(apiKey)) {
                 Calendar cal = Calendar.getInstance();
                 int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
                 int month = cal.get(Calendar.MONTH) + 1;

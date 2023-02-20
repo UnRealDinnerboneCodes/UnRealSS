@@ -31,7 +31,7 @@ public class UnRealSS {
         javalin.post("/", ctx -> {
             String head = ctx.header("key");
             String apiKey = config.apiKey.getValue();
-            if(head != null && head.equals(apiKey)) {
+            if(true && head != null && head.equals(apiKey)) {
                 Calendar cal = Calendar.getInstance();
                 int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
                 int month = cal.get(Calendar.MONTH) + 1;

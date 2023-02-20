@@ -52,7 +52,6 @@ public class UnRealSS {
         });
         javalin.start(config.port.getValue());
     }
-
     public static Path createFolder(Path baseFolder, String subFolder) throws IOException {
         return PathHelper.tryGetOrCreateFolder(baseFolder.resolve(subFolder));
     }

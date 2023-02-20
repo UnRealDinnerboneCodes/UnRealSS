@@ -1,13 +1,16 @@
-FROM gradle:7.0.0-jdk16 as builder
+FROM gradle:8.0.0-jdk17 as builder
 
 WORKDIR /build
 
 COPY build.gradle /build
+COPY gradle.properties /build
 COPY src /build/src
 
 RUN gradle shadowJar
+RUN ls -l /build/build/libs/
 
-FROM openjdk:16
-COPY --from=builder /build/build/libs/UnRealSS-2.0.0-all.jar UnRealSS-2.0.0-all.jar
+FROM openjdk:19-alpine
+COPY --from=builder "/build/build/libs/build-1.0.0-all.jar" "UnRealWeb-1.0.0-all.jar"
 
-CMD ["java", "-jar", "UnRealSS-2.0.0-all.jar"]
+
+CMD ["java", "-jar", "UnRealWeb-1.0.0-all.jar"]

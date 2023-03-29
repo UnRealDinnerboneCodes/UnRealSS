@@ -1,9 +1,11 @@
 package com.unrealdinnerbone.unrealweb;
 
+import com.unrealdinnerbone.config.ConfigCreator;
 import com.unrealdinnerbone.config.ConfigManager;
-import com.unrealdinnerbone.config.IConfigCreator;
 import com.unrealdinnerbone.config.config.IntegerConfig;
 import com.unrealdinnerbone.config.config.StringConfig;
+import com.unrealdinnerbone.javalinutils.InfluxConfig;
+import com.unrealdinnerbone.javalinutils.InfluxPlugin;
 import com.unrealdinnerbone.unreallib.file.PathHelper;
 import com.unrealdinnerbone.unreallib.json.JsonUtil;
 import io.javalin.Javalin;
@@ -17,14 +19,12 @@ import java.nio.file.Path;
 import java.util.Calendar;
 
 public class UnRealSS {
-
     private static final Logger LOGGER = LoggerFactory.getLogger("SS");
-    public static Javalin javalin;
-
     public static void main(String[] args) throws IOException {
         ConfigManager configManager = ConfigManager.createSimpleEnvPropertyConfigManger();
         Config config = configManager.loadConfig("config", Config::new);
-        javalin = Javalin.create(javalinConfig -> {}).start(config.port.getValue());
+        InfluxConfig influxConfig = configManager.loadConfig("influx", InfluxConfig::new);
+        Javalin javalin = Javalin.create(javalinConfig -> javalinConfig.plugins.register(new InfluxPlugin(influxConfig))).start(config.port.getValue());
         javalin.get("/", ctx -> ctx.result("Website Online"));
         Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.getValue()));
         javalin.post("/", ctx -> {
@@ -41,9 +41,9 @@ public class UnRealSS {
                 String name = time + "-" + uploadedFile.filename();
                 String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).orElseThrow().toString();
                 String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.getValue().length() + 1).replace("\\", "/");
-                LOGGER.info("[{}] New File! {} @ {}", cal, name, url);
+                LOGGER.info("New File! {} @ {}", name, url);
                 FileUtil.streamToFile(uploadedFile.content(), path);
-                ctx.result(JsonUtil.DEFAULT.toJson(Return.class, new Return(uploadedFile.filename(), time, url)));
+                ctx.result(JsonUtil.DEFAULT.toJson(new Return(uploadedFile.filename(), time, url)));
 
             } else {
                 ctx.status(401);
@@ -64,7 +64,7 @@ public class UnRealSS {
         public StringConfig discord;
         public StringConfig downloadsFolder;
 
-        public Config(IConfigCreator configCreator) {
+        public Config(ConfigCreator configCreator) {
             port = configCreator.createInteger("port", 9595);
             apiKey = configCreator.createString("apiKey", "");
             discord = configCreator.createString("discord", "");

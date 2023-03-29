@@ -11,8 +11,6 @@ apply from: 'https://raw.githubusercontent.com/UnRealDinnerbone/GradleHelpers/he
 version = '1.0.0'
 
 dependencies {
-    api "com.unrealdinnerbone:UnRealConfig:7.0.0+build.46"
-    api "com.unrealdinnerbone:UnRealLib:5.0.0+build.133"
-    shade ('io.javalin:javalin:5.3.2')
+    shade "com.unrealdinnerbone:JavalinUtils:1.0.0+build.3"
 }
 

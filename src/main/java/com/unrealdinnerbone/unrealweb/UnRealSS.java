@@ -18,7 +18,7 @@ import java.util.Calendar;
 
 public class UnRealSS {
     private static final Logger LOGGER = LoggerFactory.getLogger("SS");
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         EnvProvider<?> envProvider = new EnvProvider<>();
         Config config = envProvider.loadConfig("config", Config::new);
         try {
@@ -26,34 +26,31 @@ public class UnRealSS {
         } catch (ConfigException e) {
             LOGGER.error("Failed to read config", e);
         }
-        try (Javalin javalin = Javalin.create(javalinConfig -> {}).start(config.port.get())) {
-            javalin.get("/", ctx -> ctx.result("Website Online"));
-            Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.get()));
-            javalin.post("/", ctx -> {
-                String head = ctx.header("key");
-                String apiKey = config.apiKey.get();
-                if (head != null && head.equals(apiKey)) {
-                    Calendar cal = Calendar.getInstance();
-                    int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-                    int month = cal.get(Calendar.MONTH) + 1;
-                    int year = cal.get(Calendar.YEAR);
-                    Path dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
-                    UploadedFile uploadedFile = ctx.uploadedFile("theFile");
-                    long time = System.currentTimeMillis();
-                    String name = time + "-" + uploadedFile.filename();
-                    String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).orElseThrow().toString();
-                    String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.get().length() + 1).replace("\\", "/");
-                    LOGGER.info("New File! {} @ {}", name, url);
-                    FileUtil.streamToFile(uploadedFile.content(), path);
-                    ctx.result(JsonUtil.DEFAULT.toJson(new Return(uploadedFile.filename(), time, url)));
+        Javalin javalin = Javalin.create(javalinConfig -> {}).start(config.port.get());
+        javalin.get("/", ctx -> ctx.result("Website Online"));
+        Path downloadsFolder = PathHelper.tryGetOrCreateFolder(Path.of(config.downloadsFolder.get()));
+        javalin.post("/", ctx -> {
+            String head = ctx.header("key");
+            String apiKey = config.apiKey.get();
+            if(head != null && head.equals(apiKey)) {
+                Calendar cal = Calendar.getInstance();
+                int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+                int month = cal.get(Calendar.MONTH) + 1;
+                int year = cal.get(Calendar.YEAR);
+                Path dayFolder = createFolder(createFolder(createFolder(downloadsFolder, String.valueOf(year)), String.valueOf(month)), String.valueOf(dayOfMonth));
+                UploadedFile uploadedFile = ctx.uploadedFile("theFile");
+                long time = System.currentTimeMillis();
+                String name = time + "-" + uploadedFile.filename();
+                String path = PathHelper.getOrCreateFile(dayFolder.resolve(name)).orElseThrow().toString();
+                String url = ctx.queryParam("url") + path.substring(config.downloadsFolder.get().length() + 1).replace("\\", "/");
+                LOGGER.info("New File! {} @ {}", name, url);
+                FileUtil.streamToFile(uploadedFile.content(), path);
+                ctx.result(JsonUtil.DEFAULT.toJson(new Return(uploadedFile.filename(), time, url)));
 
-                } else {
-                    ctx.status(401);
-                }
-            });
-        }catch (Exception e) {
-            LOGGER.error("Failed to start javalin", e);
-        }
+            } else {
+                ctx.status(401);
+            }
+        });
     }
     public static Path createFolder(Path baseFolder, String subFolder) throws IOException {
         return PathHelper.tryGetOrCreateFolder(baseFolder.resolve(subFolder));

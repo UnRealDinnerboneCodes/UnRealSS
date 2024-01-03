@@ -11,6 +11,11 @@ apply from: 'https://raw.githubusercontent.com/UnRealDinnerbone/GradleHelpers/he
 version = '1.0.0'
 
 dependencies {
-    shade "com.unrealdinnerbone:JavalinUtils:1.0.0+build.5"
+    shade 'io.javalin:javalin:5.3.2'
+    shade "com.unrealdinnerbone:UnRealLib:8.2.4"
+    shade "com.unrealdinnerbone:UnRealConfig2:1.2.3"
+    shade 'org.fusesource.jansi:jansi:2.4.0'
+    shade 'ch.qos.logback:logback-classic:1.4.5'
+
 }
 
